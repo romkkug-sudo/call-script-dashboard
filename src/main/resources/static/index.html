@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>架電トークダッシュボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F1;
+    --surface:#FFFFFF;
+    --ink:#1C2B33;
+    --ink-soft:#5B6B72;
+    --line:#D7DEDF;
+    --accent-uketsuke:#1F6F5C;
+    --accent-aisatsu:#B67A2A;
+    --accent-closing:#24425A;
+    --accent-kirikaeshi:#6B4C9A;
+    --success:#2E7D4F;
+    --fail:#B6412E;
+    --hold:#C98A2E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:920px;margin:0 auto;padding:28px 20px 80px;}
+
+  /* header */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+  }
+  header h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0;
+    letter-spacing:.02em;
+  }
+  header .today{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+
+  /* dashboard ledger */
+  .dashboard{
+    display:flex;
+    background:var(--surface);
+    border:1px solid var(--line);
+    margin-bottom:26px;
+  }
+  .stat{
+    flex:1;
+    padding:16px 18px;
+    text-align:left;
+  }
+  .stat + .stat{border-left:1px solid var(--line);}
+  .stat .label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .stat .rate{
+    font-size:30px;
+    font-weight:900;
+    line-height:1;
+  }
+  .stat .count{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+
+  /* tabs */
+  .tabs{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    margin-bottom:20px;
+  }
+  .tab{
+    flex:1;
+    padding:12px 6px;
+    text-align:center;
+    font-weight:700;
+    font-size:15px;
+    background:none;
+    border:none;
+    border-bottom:3px solid transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  .tab.active{
+    color:var(--ink);
+    border-bottom-color:var(--tab-accent, var(--ink));
+  }
+
+  /* phase panel */
+  .panel-title{
+    font-family:'Shippori Mincho', serif;
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0 0 10px;
+  }
+
+  .script-selector{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .script-chip{
+    border:1.5px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    padding:9px 14px;
+    font-size:13px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    cursor:pointer;
+    max-width:260px;
+    text-align:left;
+    line-height:1.4;
+  }
+  .script-chip .chip-badge{
+    display:block;
+    font-size:11px;
+    font-weight:700;
+    margin-bottom:3px;
+  }
+  .script-chip.selected{
+    border-color:var(--tab-accent);
+    background:var(--tab-accent);
+    color:#fff;
+  }
+  .script-chip.selected .chip-badge{color:#fff;}
+  .script-chip.archived{opacity:.45;}
+
+  .add-chip{
+    border:1.5px dashed var(--line);
+    background:none;
+    color:var(--ink-soft);
+    padding:9px 14px;
+    font-size:13px;
+    cursor:pointer;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+
+  .script-text-box{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-left:4px solid var(--tab-accent);
+    padding:18px 20px;
+    font-size:16px;
+    line-height:1.85;
+    white-space:pre-wrap;
+    margin-bottom:16px;
+  }
+  .script-text-box.empty{
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .result-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .btn{
+    flex:1 1 150px;
+    padding:16px 10px;
+    font-size:15px;
+    font-weight:700;
+    border:2px solid var(--ink);
+    background:var(--surface);
+    color:var(--ink);
+    cursor:pointer;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  .btn:hover{opacity:.85;}
+  .btn.success{border-color:var(--success);color:var(--success);}
+  .btn.success:hover{background:var(--success);color:#fff;}
+  .btn.hold{border-color:var(--hold);color:var(--hold);}
+  .btn.hold:hover{background:var(--hold);color:#fff;}
+  .btn.fail{border-color:var(--fail);color:var(--fail);}
+  .btn.fail:hover{background:var(--fail);color:#fff;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+
+  .reason-panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    padding:14px;
+    margin-bottom:16px;
+  }
+  .reason-panel .reason-title{font-size:13px;color:var(--ink-soft);margin-bottom:10px;}
+  .reason-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .reason-chip{
+    border:1.5px solid var(--fail);
+    color:var(--fail);
+    background:none;
+    padding:8px 12px;
+    font-size:13px;
+    cursor:pointer;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  .reason-chip:hover{background:var(--fail);color:#fff;}
+  .reason-chip.skip{border-color:var(--ink-soft);color:var(--ink-soft);}
+  .reason-chip.skip:hover{background:var(--ink-soft);color:#fff;}
+
+  .confirm-toast{
+    font-size:13px;
+    color:var(--success);
+    font-weight:700;
+    margin-bottom:16px;
+  }
+
+  /* manage section */
+  details.manage{
+    margin-top:8px;
+    border:1px solid var(--line);
+    background:var(--surface);
+  }
+  details.manage summary{
+    padding:10px 14px;
+    font-size:13px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .manage-body{padding:0 14px 14px;}
+  .script-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:10px 0;
+    border-top:1px solid var(--line);
+  }
+  .script-row .script-info{flex:1;min-width:0;}
+  .script-row .script-preview{
+    font-size:13px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .script-row .script-stats{font-size:12px;margin-top:3px;}
+  .badge{font-weight:700;}
+  .badge-good{color:var(--success);}
+  .badge-bad{color:var(--fail);}
+  .badge-mid{color:var(--hold);}
+  .badge-new{color:var(--ink-soft);}
+  .badge-archived{color:var(--ink-soft);text-decoration:line-through;}
+  .row-actions{display:flex;gap:6px;flex-shrink:0;}
+  .row-actions button{
+    border:1px solid var(--line);
+    background:none;
+    color:var(--ink-soft);
+    font-size:12px;
+    padding:6px 9px;
+    cursor:pointer;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  .row-actions button:hover{border-color:var(--ink);color:var(--ink);}
+
+  .add-form{padding-top:12px;border-top:1px solid var(--line);margin-top:6px;}
+  .add-form textarea{
+    width:100%;
+    min-height:70px;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-size:14px;
+    padding:10px;
+    border:1px solid var(--line);
+    resize:vertical;
+    margin-bottom:8px;
+  }
+  .add-form .form-actions{display:flex;gap:8px;}
+  .add-form .form-actions button{
+    padding:8px 14px;
+    font-size:13px;
+    border:1.5px solid var(--ink);
+    background:var(--ink);
+    color:#fff;
+    cursor:pointer;
+    font-family:'Zen Kaku Gothic New', sans-serif;
+  }
+  .add-form .form-actions button.cancel{
+    background:none;
+    color:var(--ink-soft);
+    border-color:var(--line);
+  }
+
+  /* log list */
+  .log-section{margin-top:36px;}
+  .log-section h2{
+    font-family:'Shippori Mincho', serif;
+    font-size:17px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:8px;
+    margin-bottom:4px;
+  }
+  .log-empty{color:var(--ink-soft);font-size:13px;padding:16px 0;}
+  .log-item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .log-item .log-time{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink-soft);
+    width:48px;
+    flex-shrink:0;
+    padding-top:2px;
+  }
+  .log-item .log-main{flex:1;min-width:0;}
+  .log-item .log-headline{font-size:14px;}
+  .log-item .log-headline .phase-tag{
+    font-size:11px;
+    font-weight:700;
+    padding:2px 6px;
+    color:#fff;
+    margin-right:6px;
+  }
+  .log-item .log-result{font-weight:700;}
+  .log-item .log-result.ok{color:var(--success);}
+  .log-item .log-result.bad{color:var(--fail);}
+  .log-item .log-result.mid{color:var(--hold);}
+  .log-item .log-reason{color:var(--ink-soft);font-size:12px;}
+  .log-item .memo-input{
+    width:100%;
+    margin-top:6px;
+    padding:6px 8px;
+    font-size:13px;
+    border:1px solid var(--line);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    background:#FAFBFB;
+  }
+  .log-item .log-del{
+    flex-shrink:0;
+    border:none;
+    background:none;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-size:12px;
+    padding:2px 4px;
+  }
+  .log-item .log-del:hover{color:var(--fail);}
+
+  .loading-notice{color:var(--ink-soft);font-size:13px;padding:16px 0;}
+
+  footer{
+    margin-top:40px;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>架電トークダッシュボード</h1>
+    <div class="today" id="todayLabel"></div>
+  </header>
+
+  <div class="dashboard" id="dashboard"></div>
+
+  <div class="dashboard" id="kpiDashboard"></div>
+
+  <details class="manage" id="goalSettings">
+    <summary>▾ 1日の目標を編集</summary>
+    <div class="manage-body">
+      <div class="add-form" style="border-top:none;margin-top:0;padding-top:6px;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+          <label style="font-size:13px;color:var(--ink-soft);">
+            コール数目標<br>
+            <input type="number" id="goalCallTarget" min="1" style="width:100px;padding:6px 8px;border:1px solid var(--line);font-size:14px;">
+          </label>
+          <label style="font-size:13px;color:var(--ink-soft);">
+            アポ目標<br>
+            <input type="number" id="goalAppointmentTarget" min="1" style="width:100px;padding:6px 8px;border:1px solid var(--line);font-size:14px;">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button id="goalSaveBtn">保存</button>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="log-section">
+    <h2>全期間の合格率</h2>
+    <div class="dashboard" id="allTimeDashboard" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div id="panelRoot"></div>
+
+  <div class="log-section">
+    <h2>全期間のログ</h2>
+    <div id="logList"></div>
+  </div>
+
+  <footer>データはサーバー側のDBに保存されます。ブラウザを閉じても、別のPCから開いても記録は消えません。</footer>
+</div>
+
+<script>
+// フェーズごとの表示色(CSSの見た目に関する設定のみ。フェーズの定義自体はサーバーの /api/phases から取得する)
+const PHASE_STYLES = {
+  uketsuke: { accent: 'var(--accent-uketsuke)', accentHex: '#1F6F5C' },
+  aisatsu: { accent: 'var(--accent-aisatsu)', accentHex: '#B67A2A' },
+  closing: { accent: 'var(--accent-closing)', accentHex: '#24425A' },
+  kirikaeshi: { accent: 'var(--accent-kirikaeshi)', accentHex: '#6B4C9A' }
+};
+
+let PHASES = {};       // { [phaseKey]: { label, accent, accentHex, results } }  ← /api/phases から構築
+let SUCCESS_KEYS = {}; // { [phaseKey]: string[] }                              ← /api/phases から構築
+let NG_REASONS = [];   // string[]                                              ← /api/ng-reasons から取得
+
+let scripts = [];
+let logs = [];
+let activeTab = 'uketsuke';
+let selectedScriptId = { uketsuke: null, aisatsu: null, closing: null };
+let pendingNG = null; // { phase, scriptId }
+let addFormOpen = { uketsuke: false, aisatsu: false, closing: false };
+let editingId = null;
+let manageOpen = { uketsuke: false, aisatsu: false, closing: false }; // 「▾ トーク管理」パネルの開閉状態
+let goalSettingsOpen = false; // 「▾ 1日の目標を編集」パネルの開閉状態
+let dailyGoal = { callTarget: 70, appointmentTarget: 1 }; // /api/goal から取得
+let loaded = false;
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+
+/* ---------- backend通信 ---------- */
+async function fetchJson(url, options = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  if (!res.ok) {
+    let message = res.statusText;
+    try {
+      const body = await res.json();
+      if (body && body.message) message = body.message;
+    } catch (e) { /* ignore body parse errors */ }
+    throw new Error(message);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function reloadScripts() {
+  const phaseKeys = Object.keys(PHASES);
+  const lists = await Promise.all(
+    phaseKeys.map(phase => fetchJson(`/api/scripts?phase=${encodeURIComponent(phase)}&includeArchived=true`))
+  );
+  scripts = lists.flat();
+}
+
+async function reloadLogs() {
+  logs = await fetchJson('/api/logs');
+}
+
+async function reloadGoal() {
+  dailyGoal = await fetchJson('/api/goal');
+}
+
+async function loadData() {
+  const [phaseDefs, ngReasons] = await Promise.all([
+    fetchJson('/api/phases'),
+    fetchJson('/api/ng-reasons')
+  ]);
+  phaseDefs.forEach(p => {
+    const style = PHASE_STYLES[p.key] || {};
+    PHASES[p.key] = { label: p.label, accent: style.accent, accentHex: style.accentHex, results: p.results };
+    SUCCESS_KEYS[p.key] = p.successKeys;
+  });
+  NG_REASONS = ngReasons;
+  await Promise.all([reloadScripts(), reloadLogs(), reloadGoal()]);
+  loaded = true;
+}
+
+async function withErrorAlert(action) {
+  try {
+    await action();
+  } catch (e) {
+    alert('エラーが発生しました: ' + e.message);
+  }
+}
+
+function scriptsForPhase(phase, includeArchived) {
+  return scripts.filter(s => s.phase === phase && (includeArchived || s.status !== 'archived'));
+}
+function getScript(id) { return scripts.find(s => s.id === id); }
+
+function statsFor(scriptId, onlyToday) {
+  const key = onlyToday ? todayKey() : null;
+  const rel = logs.filter(l => l.scriptId === scriptId && (!onlyToday || l.dayKey === key));
+  const script = getScript(scriptId);
+  const succKeys = script ? SUCCESS_KEYS[script.phase] : [];
+  const uses = rel.length;
+  const success = rel.filter(l => succKeys.includes(l.result)).length;
+  return { uses, success, rate: uses ? success / uses : 0 };
+}
+
+function phaseTodayStats(phase) {
+  const key = todayKey();
+  const rel = logs.filter(l => l.phase === phase && l.dayKey === key);
+  const succKeys = SUCCESS_KEYS[phase];
+  const uses = rel.length;
+  const success = rel.filter(l => succKeys.includes(l.result)).length;
+  return { uses, success, rate: uses ? success / uses : 0 };
+}
+
+// 全期間(サーバー起動からこれまでの累計)でのフェーズ別合格率。
+// 件数(サンプル数)が積み上がるほど、この数字の信頼度が上がっていく。
+function phaseAllTimeStats(phase) {
+  const rel = logs.filter(l => l.phase === phase);
+  const succKeys = SUCCESS_KEYS[phase];
+  const uses = rel.length;
+  const success = rel.filter(l => succKeys.includes(l.result)).length;
+  return { uses, success, rate: uses ? success / uses : 0 };
+}
+
+function badgeFor(scriptId) {
+  const script = getScript(scriptId);
+  if (script.status === 'archived') return { label: 'お蔵入り', cls: 'badge-archived' };
+  const st = statsFor(scriptId, false);
+  if (st.uses < 3) return { label: '🆕 検討中(データ少)', cls: 'badge-new' };
+  if (st.rate >= 0.6) return { label: '◎ 通りやすい', cls: 'badge-good' };
+  if (st.rate <= 0.25) return { label: '△ NG多い', cls: 'badge-bad' };
+  return { label: '○ 検討中', cls: 'badge-mid' };
+}
+
+function fmtPct(n) { return Math.round(n * 100) + '%'; }
+function fmtTime(ts) {
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+/* ---------- rendering ---------- */
+function render() {
+  if (!loaded) return;
+  renderHeader();
+  renderDashboard();
+  renderKpiDashboard();
+  renderGoalSettings();
+  renderAllTimeStats();
+  renderTabs();
+  renderPanel();
+  renderLogList();
+}
+
+function renderHeader() {
+  const d = new Date();
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('todayLabel').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${wd})`;
+}
+
+// 「切り返し」のように結果を記録しない(results が空の)フェーズは、
+// 成績を集計する意味がないので本日/全期間の集計対象から外す。
+function recordablePhaseKeys() {
+  return Object.keys(PHASES).filter(phase => PHASES[phase].results.length > 0);
+}
+
+function renderDashboard() {
+  const root = document.getElementById('dashboard');
+  root.innerHTML = '';
+  recordablePhaseKeys().forEach(phase => {
+    const st = phaseTodayStats(phase);
+    const div = document.createElement('div');
+    div.className = 'stat';
+    div.innerHTML = `
+      <div class="label">${PHASES[phase].label}(本日)</div>
+      <div class="rate" style="color:${PHASES[phase].accentHex}">${st.uses ? fmtPct(st.rate) : '-'}</div>
+      <div class="count">${st.uses}回中 ${st.success}回成功</div>
+    `;
+    root.appendChild(div);
+  });
+}
+
+// 「本日のコール数」= 受付突破フェーズの試行回数(電話をかければ必ず1件記録されるため)。
+// 「本日のアポ数」= クロージングフェーズの成功件数(訪問・リモート)。
+// どちらも既存の集計から取れるので、新しいデータは増やさず目標値だけ追加する。
+function renderKpiDashboard() {
+  const root = document.getElementById('kpiDashboard');
+  root.innerHTML = '';
+  const callStats = phaseTodayStats('uketsuke');
+  const apptStats = phaseTodayStats('closing');
+  root.appendChild(goalTile('コール数(本日)', callStats.uses, dailyGoal.callTarget));
+  root.appendChild(goalTile('アポ(本日)', apptStats.success, dailyGoal.appointmentTarget));
+}
+
+function goalTile(label, actual, target) {
+  const div = document.createElement('div');
+  div.className = 'stat';
+  const pct = target ? Math.min(100, Math.round((actual / target) * 100)) : 0;
+  div.innerHTML = `
+    <div class="label">${label}</div>
+    <div class="rate">${actual}<span style="font-size:15px;color:var(--ink-soft);">/${target}</span></div>
+    <div class="count">${pct}%達成</div>
+  `;
+  return div;
+}
+
+function renderGoalSettings() {
+  const details = document.getElementById('goalSettings');
+  details.open = goalSettingsOpen;
+
+  const callInput = document.getElementById('goalCallTarget');
+  const apptInput = document.getElementById('goalAppointmentTarget');
+  // 入力中の値を上書きしないよう、フォーカスが当たっていない時だけ現在値を反映する
+  if (document.activeElement !== callInput) callInput.value = dailyGoal.callTarget;
+  if (document.activeElement !== apptInput) apptInput.value = dailyGoal.appointmentTarget;
+
+  document.getElementById('goalSaveBtn').onclick = () => withErrorAlert(async () => {
+    const callTarget = Number(callInput.value);
+    const appointmentTarget = Number(apptInput.value);
+    if (!callTarget || !appointmentTarget) return;
+    dailyGoal = await fetchJson('/api/goal', {
+      method: 'PUT',
+      body: JSON.stringify({ callTarget, appointmentTarget })
+    });
+    goalSettingsOpen = true;
+    render();
+  });
+}
+
+function renderAllTimeStats() {
+  const root = document.getElementById('allTimeDashboard');
+  if (!root) return;
+  root.innerHTML = '';
+  recordablePhaseKeys().forEach(phase => {
+    const st = phaseAllTimeStats(phase);
+    const div = document.createElement('div');
+    div.className = 'stat';
+    const lowSample = st.uses > 0 && st.uses < 10
+      ? `<div class="count" style="color:var(--hold);">サンプルまだ少なめ</div>` : '';
+    div.innerHTML = `
+      <div class="label">${PHASES[phase].label}(全期間)</div>
+      <div class="rate" style="color:${PHASES[phase].accentHex}">${st.uses ? fmtPct(st.rate) : '-'}</div>
+      <div class="count">${st.uses}件中 ${st.success}件成功</div>
+      ${lowSample}
+    `;
+    root.appendChild(div);
+  });
+}
+
+function renderTabs() {
+  const root = document.getElementById('tabs');
+  root.innerHTML = '';
+  Object.keys(PHASES).forEach(phase => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (activeTab === phase ? ' active' : '');
+    btn.style.setProperty('--tab-accent', PHASES[phase].accentHex);
+    btn.textContent = PHASES[phase].label;
+    btn.onclick = () => { activeTab = phase; pendingNG = null; render(); };
+    root.appendChild(btn);
+  });
+}
+
+function renderPanel() {
+  const root = document.getElementById('panelRoot');
+  const phase = activeTab;
+  const conf = PHASES[phase];
+  const accentHex = conf.accentHex;
+  const activeScripts = scriptsForPhase(phase, false);
+  const selId = selectedScriptId[phase] && getScript(selectedScriptId[phase]) && getScript(selectedScriptId[phase]).status !== 'archived'
+    ? selectedScriptId[phase]
+    : (activeScripts[0] ? activeScripts[0].id : null);
+  selectedScriptId[phase] = selId;
+  const selScript = selId ? getScript(selId) : null;
+
+  let html = `<div style="--tab-accent:${accentHex}">`;
+  html += `<div class="panel-title">使うトークを選ぶ</div>`;
+  html += `<div class="script-selector">`;
+  activeScripts.forEach(s => {
+    const b = badgeFor(s.id);
+    const preview = s.text.length > 18 ? s.text.slice(0,18) + '…' : s.text;
+    html += `<button class="script-chip ${s.id === selId ? 'selected' : ''}" data-select="${s.id}">
+      <span class="chip-badge">${s.label}</span>${preview}
+    </button>`;
+  });
+  html += `<button class="add-chip" data-addopen="1">＋ 新しいトーク案を追加</button>`;
+  html += `</div>`;
+
+  if (selScript) {
+    html += `<div class="script-text-box">${escapeHtml(selScript.text)}</div>`;
+  } else {
+    html += `<div class="script-text-box empty">まだトークがありません。「＋ 新しいトーク案を追加」から作成してください。</div>`;
+  }
+
+  // 「切り返し」のように結果を記録しないフェーズ(results が空)では、
+  // 結果ボタンやNG理由選択は出さず、参考資料として見るだけにする。
+  if (selScript && conf.results.length > 0) {
+    html += `<div class="result-buttons">`;
+    conf.results.forEach(r => {
+      html += `<button class="btn ${r.cls}" data-result="${r.key}">${r.label}</button>`;
+    });
+    html += `</div>`;
+
+    if (pendingNG && pendingNG.phase === phase && pendingNG.scriptId === selId) {
+      html += `<div class="reason-panel">
+        <div class="reason-title">NGの理由を選んでください</div>
+        <div class="reason-chips">`;
+      NG_REASONS.forEach(reason => {
+        html += `<button class="reason-chip" data-reason="${escapeHtml(reason)}">${reason}</button>`;
+      });
+      html += `<button class="reason-chip skip" data-reason="">理由なしで記録</button>`;
+      html += `</div></div>`;
+    }
+  }
+
+  // manage section(追加・編集フォームを開いた時は、パネル自体も開いた状態にする。
+  // そうしないと、フォームが折りたたまれたdetailsの中に隠れて何も起きていないように見えてしまう)
+  const editingInThisPhase = scriptsForPhase(phase, true).some(s => s.id === editingId);
+  const showManage = manageOpen[phase] || addFormOpen[phase] || editingInThisPhase;
+  html += `<details class="manage"${showManage ? ' open' : ''}><summary>▾ トーク管理(追加・編集・お蔵入り)</summary><div class="manage-body">`;
+  scriptsForPhase(phase, true).forEach(s => {
+    const b = badgeFor(s.id);
+    const st = statsFor(s.id, false);
+    if (editingId === s.id) {
+      html += `<div class="script-row" style="display:block;">
+        <div class="add-form" style="border-top:none;margin-top:0;padding-top:6px;">
+          <textarea id="editText">${escapeHtml(s.text)}</textarea>
+          <div class="form-actions">
+            <button data-editsave="${s.id}">保存(新バージョンとして記録)</button>
+            <button class="cancel" data-editcancel="1">キャンセル</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="script-row">
+        <div class="script-info">
+          <div class="script-preview"><span class="badge ${b.cls}">${b.label}</span> ${escapeHtml(s.label)}</div>
+          <div class="script-stats">使用${st.uses}回 成功${st.success}回(${st.uses ? fmtPct(st.rate) : '-'})</div>
+        </div>
+        <div class="row-actions">
+          <button data-edit="${s.id}">編集</button>
+          ${s.status !== 'archived' ? `<button data-archive="${s.id}">お蔵入り</button>` : `<button data-restore="${s.id}">復活</button>`}
+        </div>
+      </div>`;
+    }
+  });
+
+  if (addFormOpen[phase]) {
+    html += `<div class="add-form">
+      <textarea id="newScriptText" placeholder="新しいトーク文言を入力"></textarea>
+      <div class="form-actions">
+        <button data-addsave="${phase}">保存</button>
+        <button class="cancel" data-addcancel="1">キャンセル</button>
+      </div>
+    </div>`;
+  }
+
+  html += `</div></details>`;
+  html += `</div>`;
+  root.innerHTML = html;
+
+  // トーク管理パネルを手動で開閉した場合も状態を覚えておく(そうしないと次のrender()で閉じてしまう)
+  const manageDetails = root.querySelector('details.manage');
+  if (manageDetails) {
+    manageDetails.addEventListener('toggle', () => { manageOpen[phase] = manageDetails.open; });
+  }
+
+  // bind events
+  root.querySelectorAll('[data-select]').forEach(el => {
+    el.onclick = () => { selectedScriptId[phase] = el.dataset.select; pendingNG = null; render(); };
+  });
+  const addOpenBtn = root.querySelector('[data-addopen]');
+  if (addOpenBtn) addOpenBtn.onclick = () => {
+    addFormOpen[phase] = true;
+    manageOpen[phase] = true;
+    render();
+    document.getElementById('newScriptText').focus();
+  };
+  const addCancelBtn = root.querySelector('[data-addcancel]');
+  if (addCancelBtn) addCancelBtn.onclick = () => { addFormOpen[phase] = false; render(); };
+  const addSaveBtn = root.querySelector('[data-addsave]');
+  if (addSaveBtn) addSaveBtn.onclick = () => withErrorAlert(async () => {
+    const text = document.getElementById('newScriptText').value.trim();
+    if (!text) return;
+    const created = await fetchJson('/api/scripts', {
+      method: 'POST',
+      body: JSON.stringify({ phase, text })
+    });
+    addFormOpen[phase] = false;
+    await reloadScripts();
+    selectedScriptId[phase] = created.id;
+    render();
+  });
+
+  root.querySelectorAll('[data-edit]').forEach(el => {
+    el.onclick = () => { editingId = el.dataset.edit; manageOpen[phase] = true; render(); };
+  });
+  const editCancelBtn = root.querySelector('[data-editcancel]');
+  if (editCancelBtn) editCancelBtn.onclick = () => { editingId = null; render(); };
+  const editSaveBtn = root.querySelector('[data-editsave]');
+  if (editSaveBtn) editSaveBtn.onclick = () => withErrorAlert(async () => {
+    const oldId = editSaveBtn.dataset.editsave;
+    const newText = document.getElementById('editText').value.trim();
+    if (!newText) return;
+    const revised = await fetchJson(`/api/scripts/${oldId}/revise`, {
+      method: 'POST',
+      body: JSON.stringify({ text: newText })
+    });
+    await reloadScripts();
+    selectedScriptId[phase] = revised.id;
+    editingId = null;
+    render();
+  });
+
+  root.querySelectorAll('[data-archive]').forEach(el => {
+    el.onclick = () => withErrorAlert(async () => {
+      await fetchJson(`/api/scripts/${el.dataset.archive}/archive`, { method: 'PATCH' });
+      await reloadScripts();
+      render();
+    });
+  });
+  root.querySelectorAll('[data-restore]').forEach(el => {
+    el.onclick = () => withErrorAlert(async () => {
+      await fetchJson(`/api/scripts/${el.dataset.restore}/restore`, { method: 'PATCH' });
+      await reloadScripts();
+      render();
+    });
+  });
+
+  root.querySelectorAll('[data-result]').forEach(el => {
+    el.onclick = () => handleResult(phase, selId, el.dataset.result);
+  });
+  root.querySelectorAll('[data-reason]').forEach(el => {
+    el.onclick = () => finalizeNG(el.dataset.reason);
+  });
+}
+
+function handleResult(phase, scriptId, resultKey) {
+  if (resultKey === 'ng') {
+    pendingNG = { phase, scriptId };
+    render();
+    return;
+  }
+  commitLog(phase, scriptId, resultKey, null);
+}
+
+function finalizeNG(reason) {
+  if (!pendingNG) return;
+  const target = pendingNG;
+  pendingNG = null;
+  commitLog(target.phase, target.scriptId, 'ng', reason || null);
+}
+
+function commitLog(phase, scriptId, result, ngReason) {
+  return withErrorAlert(async () => {
+    await fetchJson('/api/logs', {
+      method: 'POST',
+      body: JSON.stringify({ phase, scriptId, result, ngReason })
+    });
+    await reloadLogs();
+    render();
+  });
+}
+
+function deleteLog(id) {
+  return withErrorAlert(async () => {
+    await fetchJson(`/api/logs/${id}`, { method: 'DELETE' });
+    await reloadLogs();
+    render();
+  });
+}
+
+function updateMemo(id, value) {
+  return withErrorAlert(async () => {
+    await fetchJson(`/api/logs/${id}/memo`, {
+      method: 'PATCH',
+      body: JSON.stringify({ memo: value })
+    });
+    const l = logs.find(x => x.id === id);
+    if (l) l.memo = value;
+  });
+}
+
+function renderLogList() {
+  const root = document.getElementById('logList');
+  const today = logs.filter(l => l.dayKey === todayKey());
+  if (today.length === 0) {
+    root.innerHTML = '<div class="log-empty">まだ本日の記録はありません。フェーズを選んで結果を記録すると、ここに表示されます。</div>';
+    return;
+  }
+  root.innerHTML = '';
+  today.forEach(l => {
+    const conf = PHASES[l.phase];
+    const resultDef = conf.results.find(r => r.key === l.result);
+    const resultCls = resultDef ? (resultDef.cls === 'success' ? 'ok' : resultDef.cls === 'fail' ? 'bad' : 'mid') : '';
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML = `
+      <div class="log-time">${fmtTime(l.ts)}</div>
+      <div class="log-main">
+        <div class="log-headline">
+          <span class="phase-tag" style="background:${conf.accentHex}">${conf.label}</span>
+          <span class="log-result ${resultCls}">${resultDef ? resultDef.label : l.result}</span>
+          ${l.ngReason ? `<span class="log-reason">(${escapeHtml(l.ngReason)})</span>` : ''}
+          <span class="log-reason">${escapeHtml(l.scriptLabel)}</span>
+        </div>
+        <input class="memo-input" placeholder="一言メモ(あれば)" value="${escapeHtml(l.memo || '')}" data-memo="${l.id}">
+      </div>
+      <button class="log-del" data-del="${l.id}">取消</button>
+    `;
+    root.appendChild(div);
+  });
+  root.querySelectorAll('[data-memo]').forEach(el => {
+    el.onchange = () => updateMemo(Number(el.dataset.memo), el.value);
+  });
+  root.querySelectorAll('[data-del]').forEach(el => {
+    el.onclick = () => deleteLog(Number(el.dataset.del));
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+(async function init() {
+  document.getElementById('dashboard').innerHTML = '<div class="loading-notice">読み込み中…</div>';
+  // #goalSettings は(トーク管理パネルと違い)innerHTMLで再生成されない固定要素なので、
+  // 開閉の同期は最初に一度だけ登録すればよい
+  document.getElementById('goalSettings').addEventListener('toggle', (e) => {
+    goalSettingsOpen = e.target.open;
+  });
+  await withErrorAlert(loadData);
+  render();
+})();
+</script>
+</body>
+</html>
